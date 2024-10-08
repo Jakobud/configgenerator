@@ -22,11 +22,12 @@ jobs:
       - name: Create ZIP file
         run: zip -r newasset.zip release-folder
 
-      # Upload the ZIP as a release asset
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
+      - name: Release Asset
+        # You may pin to the exact commit or the version.
+        # uses: csexton/release-asset-action@3567794e918fa3068116688122a76cdeb57b5f09
+        uses: csexton/release-asset-action@v3
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./newasset.zip
-          asset_name: newasset.zip
-          asset_content_type: application/zip
+          # The file to upload
+          file: newasset.zip
+          # The GitHub token used to create an authenticated client
+          github-token: ${{ secrets.GITHUB_TOKEN }}
