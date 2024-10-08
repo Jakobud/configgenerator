@@ -1,0 +1,10 @@
+{
+  "plugin": {
+	"name": "configgenerator",
+	"description": "Config Generator",
+	"version": "1.0.0",
+	"author": "Jake Wilson",
+	"type": "plugin",
+	"start": "false"
+  }
+}
