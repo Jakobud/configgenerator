@@ -1,0 +1,32 @@
+name: "Wrap release in folder"
+on: 
+  release:
+    types: [published]
+
+jobs:
+  wrap-release:
+    runs-on: ubuntu-latest
+    steps:
+      # Check the code
+      - name: Checkout repo
+        uses: actions/checkout@v4.2.1
+
+      # Create a folder and move the files inside
+      - name: Create folder and move files
+        run: |
+          mkdir release-folder
+          mv * release-folder || true # Move all files into the folder
+          mv .[^.]* release-folder || true # Move dotfiles (like .gitignore) to the folder
+
+      # Create a zip of the folder
+      - name: Create ZIP file
+        run: zip -r newasset.zip release-folder
+
+      # Upload the ZIP as a release asset
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ./newasset.zip
+          asset_name: newasset.zip
+          asset_content_type: application/zip
