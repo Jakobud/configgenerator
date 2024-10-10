@@ -109,5 +109,10 @@ This plugin includes a `settings.json` with various values you can adjust
   - You could change this to `cfg` and the plugin would overwrite MAME's own generated config files but this would not be recommended as MAME also includes bookkeeping statistics and debugger information in it's config files.
 
 - `atstart` - _boolean_
+
   - Whether or not to generate the config file when emulation starts instead of when emulation ends
   - Default: `false`
+
+- `overwrite` - _boolean_
+  - Whether or not to overwrite existing `.cfg` files
+  - Default: `true`

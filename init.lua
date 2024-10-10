@@ -11,7 +11,8 @@ local settings = {}
 local settings_defaults = {
   comments = true,
   output = "cfg_generated",
-  atstart = false
+  atstart = false,
+  overwrite = true
 }
 
 local settings_path = plugin_directory .. "/settings.json"
@@ -35,7 +36,6 @@ else
 end
 
 function execute()
-  print('executing the plugin')
   -- If no rom is loaded, don't do anything
   if emu.romname() == "___empty" then
     return
@@ -110,8 +110,16 @@ function execute()
     end
   end
 
+  local output_file = path .. "/" .. emu.romname() .. ".cfg"
+
+  -- Check if file already exists and overwrite is disabled
+  if settings.overwrite == false and io.open(output_file, "r") then
+    emu.print_verbose("configgenerator: file already exists and overwrite is disabled " .. output_file)
+    return
+  end
+
   -- Write output file
-  local file = io.open(path .. "/" .. emu.romname() .. ".cfg", "w")
+  local file = io.open(output_file, "w")
   file:write(header .. inputs .. footer)
   file:close()
 end
