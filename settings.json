@@ -1,4 +1,5 @@
 {
   "comments": true,
-  "output": "cfg_generated"
+  "output": "cfg_generated",
+  "atstart": false
 }
