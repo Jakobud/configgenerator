@@ -11,7 +11,7 @@ local settings_defaults = {
   output = "cfg_generated"
 }
 
-local settings_path = manager.plugins[configgenerator.name].directory .. "/settings.json"
+local settings_path = plugin_directory .. "/settings.json"
 local settings = {}
 
 function configgenerator.startplugin()
