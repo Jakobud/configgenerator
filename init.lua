@@ -1,13 +1,9 @@
+-- Current plugin directory
+local plugin_directory = manager.plugins['configgenerator'].directory
 
-local exports = {
-  name = "configgenerator",
-  version = "1.0.0",
-  description = "Config Generator",
-  author = { name = "Jake Wilson" }
-}
-
-local configgenerator = exports
+-- Load plugin metadata
 local json = require('json')
+local configgenerator = json.parse(io.open(plugin_directory .. '/plugin.json'):read('*a')).plugin
 
 -- Default settings
 local settings_defaults = {
@@ -121,4 +117,4 @@ function configgenerator.startplugin()
   end)
 end
 
-return exports
+return configgenerator
