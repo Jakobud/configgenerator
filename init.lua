@@ -11,7 +11,6 @@ local json = require('json')
 
 -- Default settings
 local settings_defaults = {
-  autoexit = true,
   comments = true,
   output = "cfg_generated"
 }
@@ -58,8 +57,12 @@ function configgenerator.startplugin()
         -- Add to output only if it's a controller or misc type
         if (field.type_class == "controller" or field.type_class == 'misc' or field.type_class == 'dipswitch') then
 
+          local comment = ''
+          if settings.comments == true then
+            comment = '            <!-- ' .. field.name .. ' -->\n'
+          end
+
           -- Build the input tag
-          local comment = '            <!-- ' .. field.name .. ' -->\n'
           inputs = inputs .. comment .. '            <port tag="' .. port_name .. '" type="' .. token .. '" mask="' .. field.mask .. '" defvalue="' .. field.defvalue
 
           -- If it's a dipswitch, add the current value
@@ -78,6 +81,10 @@ function configgenerator.startplugin()
           end
 
           inputs = inputs .. '</port>\n'
+
+          if settings.comments == true then
+            inputs = inputs .. '\n'
+          end
         end
       end
     end
@@ -87,13 +94,13 @@ function configgenerator.startplugin()
     local footer = '        </input>\n    </system>\n</mameconfig>\n'
 
     -- Get attributes of the output directory
-    local path = "cfg_generated"
+    local path = settings.output
     local attr = lfs.attributes(path)
 
     -- Check if output directory already exists but is not a directory
     if (attr and attr.mode ~= "directory") then
       emu.print_verbose("configgenerator: output path exists but isn't directory " .. path)
-      manager.machine.exit()
+      return
     end
 
     -- Path doesn't exist yet, create it
@@ -103,7 +110,7 @@ function configgenerator.startplugin()
       -- Check that path was created
       if not lfs.attributes(path) then
         emu.print_verbose("configgenerator: unable to create path " .. path)
-        manager.machine.exit()
+        return
       end
     end
 
@@ -111,8 +118,6 @@ function configgenerator.startplugin()
     local file = io.open(path .. "/" .. emu.romname() .. ".cfg", "w")
     file:write(header .. inputs .. footer)
     file:close()
-
-    -- manager.machine:exit()
   end)
 end
 
