@@ -16,7 +16,7 @@ local settings = {}
 
 function configgenerator.startplugin()
 
-  emu.register_start(function()
+  emu.register_stop(function()
 
     -- If no rom is loaded, don't do anything
     if emu.romname() == "___empty" then
