@@ -1,5 +1,5 @@
-name: "Wrap release in folder"
-on: 
+name: 'Wrap release in folder'
+on:
   release:
     types: [published]
 
@@ -11,20 +11,25 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4.2.1
 
+      # Update the plugin.json with tag version
+      - name: Add tag version to plugin.json
+        run: |
+          sed -i "s/\"version\": \".*\"/\"version\": \"$GITHUB_REF\"/" plugin.json
+
       # Create a folder and move the files inside
       - name: Create folder and move files
         run: |
-          mkdir release-folder
-          mv * release-folder || true # Move all files into the folder
-          mv .[^.]* release-folder || true # Move dotfiles (like .gitignore) to the folder
+          mkdir configgenerator
+          mv * configgenerator || true
 
       # Create a zip of the folder
       - name: Create ZIP file
-        run: zip -r newasset.zip release-folder
+        run: zip -r configgenerator.zip configgenerator
 
-      - name: Release Asset
+      # Upload the zip file
+      - name: Upload the zip file
         uses: alexellis/upload-assets@0.4.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          asset_paths: '["./newasset.zip"]'
+          asset_paths: '["./configgenerator.zip"]'
