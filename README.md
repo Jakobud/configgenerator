@@ -84,7 +84,8 @@ This plugin includes a `settings.json` with various values you can adjust
 {
   "comments": true,
   "output": "cfg_generated",
-  "atstart": false
+  "atstart": false,
+  "overwrite": true
 }
 ```
 
