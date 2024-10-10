@@ -14,7 +14,7 @@ jobs:
       # Update the plugin.json with tag version
       - name: Add tag version to plugin.json
         run: |
-          sed -i "s/\"version\": \".*\"/\"version\": \"$GITHUB_REF\"/" plugin.json
+          sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"${GITHUB_REF#v}\"/" plugin.json
 
       # Create a folder and move the files inside
       - name: Create folder and move files
