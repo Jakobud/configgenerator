@@ -7,6 +7,17 @@ local exports = {
 }
 
 local configgenerator = exports
+local json = require('json')
+
+-- Default settings
+local settings_defaults = {
+  autoexit = true,
+  comments = true,
+  output = "cfg_generated"
+}
+
+local settings_path = manager.plugins[configgenerator.name].directory .. "/settings.json"
+local settings = {}
 
 function configgenerator.startplugin()
 
@@ -15,6 +26,24 @@ function configgenerator.startplugin()
     -- If no rom is loaded, don't do anything
     if emu.romname() == "___empty" then
       return
+    end
+
+    -- Open settings file
+    local settings_file = io.open(settings_path, "r")
+
+    -- If settings file doesn't exist, use default settings
+    if settings_file == nil then
+      settings = settings_defaults
+    else
+      -- Parse settings file
+      settings = json.parse(settings_file:read("*a"))
+
+      -- Add any missing settings from defaults and fix any wrong types
+      for k,v in pairs(settings_defaults) do
+        if (settings[k] == nil or type(settings[k]) ~= type(v)) then
+          settings[k] = v
+        end
+      end
     end
 
     local inputs = ""
