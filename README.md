@@ -84,7 +84,8 @@ This plugin includes a `settings.json` with various values you can adjust
 {
   "comments": true,
   "output": "cfg_generated",
-  "atstart": false,
+  "run_at_start": false,
+  "run_at_end": true,
   "overwrite": true
 }
 ```
@@ -109,10 +110,15 @@ This plugin includes a `settings.json` with various values you can adjust
   - Default: `cfg_generated`
   - You could change this to `cfg` and the plugin would overwrite MAME's own generated config files but this would not be recommended as MAME also includes bookkeeping statistics and debugger information in it's config files.
 
-- `atstart` - _boolean_
+- `run_at_start` - _boolean_
 
-  - Whether or not to generate the config file when emulation starts instead of when emulation ends
+  - Whether or not to generate the config file when a game loads (emulation starts)
   - Default: `false`
+
+- `run_at_end` - _boolean_
+
+  - Whether or not to generate the config file you exit a game (emulation ends)
+  - Default: `true`
 
 - `overwrite` - _boolean_
   - Whether or not to overwrite existing `.cfg` files

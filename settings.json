@@ -1,6 +1,7 @@
 {
   "comments": true,
   "output": "cfg_generated",
-  "atstart": false,
+  "run_at_start": false,
+  "run_at_end": true,
   "overwrite": true
 }

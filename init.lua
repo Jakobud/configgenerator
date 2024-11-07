@@ -11,7 +11,8 @@ local settings = {}
 local settings_defaults = {
   comments = true,
   output = "cfg_generated",
-  atstart = false,
+  run_at_start = false,
+  run_at_end = true,
   overwrite = true
 }
 
@@ -128,14 +129,14 @@ function configgenerator.startplugin()
 
   -- Execute plugin when emulation starts
   emu.register_start(function()
-    if settings.atstart == true then
+    if settings.run_at_start == true then
       execute()
     end
   end)
 
   -- Execute plugin when emulation stops
   emu.register_stop(function()
-    if settings.atstart == false then
+    if settings.run_at_end == true then
       execute()
     end
   end)
