@@ -41,6 +41,10 @@ else
   end
 end
 
+-- Locally defined event notifiers
+local runAtStartNotifier = nil
+local runAtEndNotifier = nil
+
 function execute()
   -- If no rom is loaded, don't do anything
   if emu.romname() == "___empty" then
@@ -132,19 +136,34 @@ end
 
 function configgenerator.startplugin()
 
-  -- Execute plugin when emulation starts
-  emu.register_start(function()
-    if settings.run_at_start == true then
-      execute()
-    end
-  end)
+  if emu.add_machine_reset_notifier == nil and emu.register_start == nil then
+    print("Newer version of MAME is required")
+    return
+  end
 
-  -- Execute plugin when emulation stops
-  emu.register_stop(function()
-    if settings.run_at_end == true then
-      execute()
+  -- Register start notifier
+  if settings.run_at_start == true then
+    print("Registering start notifier")
+    if emu.add_machine_reset_notifier ~= nil then
+      -- Modern MAME notifier
+      runAtStartNotifier = emu.add_machine_reset_notifier(execute)
+    elseif emu.register_start ~= nil then
+      -- Backwards compatibility notifier
+      emu.register_start(execute)
     end
-  end)
+  end
+
+  -- Register stop notifier
+  if settings.run_at_end == true then
+    print("Registering stop notifier")
+    if emu.add_machine_stop_notifier ~= nil then
+      -- Modern MAME notifier
+      runAtEndNotifier = emu.add_machine_stop_notifier(execute)
+    elseif emu.register_stop ~= nil then
+      -- Backwards compatibility notifier
+      emu.register_stop(execute)
+    end
+  end
 
 end
 
