@@ -51,6 +51,8 @@ function execute()
     return
   end
 
+  print(string.format("Generating config: \"%s/%s.cfg\"", settings.output, emu.romname()))
+
   local inputs = ""
   local ioport = manager.machine.ioport
   local input = manager.machine.input
@@ -105,7 +107,7 @@ function execute()
 
   -- Check if output directory already exists but is not a directory
   if (attr and attr.mode ~= "directory") then
-    emu.print_verbose("configgenerator: output path exists but isn't directory " .. path)
+    print("Output path exists but isn't directory " .. path)
     return
   end
 
@@ -115,7 +117,7 @@ function execute()
 
     -- Check that path was created
     if not lfs.attributes(path) then
-      emu.print_verbose("configgenerator: unable to create path " .. path)
+      print("Unable to create path " .. path)
       return
     end
   end
@@ -124,7 +126,7 @@ function execute()
 
   -- Check if file already exists and overwrite is disabled
   if settings.overwrite == false and io.open(output_file, "r") then
-    emu.print_verbose("configgenerator: file already exists and overwrite is disabled " .. output_file)
+    print("File already exists and overwrite is disabled " .. output_file)
     return
   end
 
@@ -135,6 +137,7 @@ function execute()
 end
 
 function configgenerator.startplugin()
+  print("Plugin started")
 
   if emu.add_machine_reset_notifier == nil and emu.register_start == nil then
     print("Newer version of MAME is required")
