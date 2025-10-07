@@ -5,6 +5,11 @@ local plugin_directory = manager.plugins['configgenerator'].directory
 local json = require('json')
 local configgenerator = json.parse(io.open(plugin_directory .. '/plugin.json'):read('*a')).plugin
 
+-- Override native LUA print function
+local print = function(message)
+ emu.print_verbose("[Config Generator Plugin] " .. message)
+end
+
 local settings = {}
 
 -- Default settings
