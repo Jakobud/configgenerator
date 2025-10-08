@@ -5,6 +5,11 @@ local plugin_directory = manager.plugins['configgenerator'].directory
 local json = require('json')
 local configgenerator = json.parse(io.open(plugin_directory .. '/plugin.json'):read('*a')).plugin
 
+-- Override native LUA print function
+local print = function(message)
+ emu.print_verbose("[Config Generator Plugin] " .. message)
+end
+
 local settings = {}
 
 -- Default settings
@@ -36,6 +41,10 @@ else
   end
 end
 
+-- Locally defined event notifiers
+local runAtStartNotifier = nil
+local runAtEndNotifier = nil
+
 function execute()
   -- If no rom is loaded, don't do anything
   if emu.romname() == "___empty" then
@@ -46,49 +55,101 @@ function execute()
   local ioport = manager.machine.ioport
   local input = manager.machine.input
 
-  -- Iterate through all ports and their fields, generating input tags for .cfg output
+  -- Iterate through all ports (:DW1, :IN1, :IN2, etc) and their fields, generating input tags for .cfg output
   for port_name, port in pairs(ioport.ports) do
-    for field_name, field in pairs(port.fields) do
+
+    -- Collect field names and sort them for consistent order
+    local field_names = {}
+    for field_name, _ in pairs(port.fields) do
+      table.insert(field_names, field_name)
+    end
+    table.sort(field_names)
+
+    -- Iterate through fields in sorted order
+    for _, field_name in ipairs(field_names) do
+      local field = port.fields[field_name]
       local token = ioport:input_type_to_token(field.type, field.player)
 
-      -- Add to output only if it's a controller or misc type
-      if (field.type_class == "controller" or field.type_class == 'misc' or field.type_class == 'dipswitch') then
+      -- Add comments if enabled in settings
+      local comment = ''
+      if settings.comments == true then
+        -- Field name as comment
+        comment = string.format('            <!-- %s -->\n', field.name)
 
-        local comment = ''
-        if settings.comments == true then
-          comment = '            <!-- ' .. field.name .. ' -->\n'
-        end
-
-        -- Build the input tag
-        inputs = inputs .. comment .. '            <port tag="' .. port_name .. '" type="' .. token .. '" mask="' .. field.mask .. '" defvalue="' .. field.defvalue
-
-        -- If it's a dipswitch, add the current value
-        if field.type_class == 'dipswitch' then
-          inputs = inputs .. '" value="' .. field.user_value
-        end
-
-        inputs = inputs ..'">'
-
-        -- Add the input sequence tokens
-        local sequence = field:input_seq()
-        if sequence.empty == false then
-          inputs = inputs .. '\n                <newseq type="standard">\n'
-          inputs = inputs .. '                    ' .. input:seq_to_tokens(sequence) .. '\n'
-          inputs = inputs .. '                </newseq>\n            '
-        end
-
-        inputs = inputs .. '</port>\n'
-
-        if settings.comments == true then
-          inputs = inputs .. '\n'
+        -- Field settings as comments
+        for key, value in pairs(field.settings) do
+          comment = comment .. string.format('            <!-- Value: %s = %s -->\n', key, tostring(value))
         end
       end
+
+      local portProperties = {}
+
+      -- Build the port tag
+      table.insert(portProperties, string.format('tag="%s"', port_name))
+      table.insert(portProperties, string.format('type="%s"', token))
+      table.insert(portProperties, string.format('mask="%s"', field.mask))
+      table.insert(portProperties, string.format('defvalue="%s"', field.defvalue))
+
+      -- If it's a dipswitch, add the current value
+      if field.type_class == 'dipswitch' or field.type_class == 'config' then
+        table.insert(portProperties, string.format('value="%s"', field.user_value))
+      end
+
+      -- Analog field properties being added with non-default values in MAME 0.282
+      -- if field.is_analog then
+      --   if field.analog_reverse ~= nil then
+      --     table.insert(portProperties, string.format('reverse="%s"', field.analog_reverse and "yes" or "no"))
+      --     print(tostring(field.analog_reverse))
+      --   end
+
+      --   if field.sensitivity ~= nil then
+      --     table.insert(portProperties, string.format('sensitivity="%s"', field.sensitivity))
+      --   end
+
+      --   if field.keydelta ~= nil then
+      --     table.insert(portProperties, string.format('keydelta="%s"', field.keydelta))
+      --   end
+
+      --   if field.centerdelta ~= nil then
+      --     table.insert(portProperties, string.format('centerdelta="%s"', field.centerdelta))
+      --   end
+      -- end
+
+      -- Add the input sequence tokens for each type
+      local sequences = ''
+      for _, sequenceType in ipairs({'standard', 'increment', 'decrement'}) do
+        local sequence = field:input_seq(sequenceType)
+        if sequence.empty == false then
+          sequences = sequences .. string.format('\n                <newseq type="%s">\n', sequenceType)
+          sequences = sequences .. '                    ' .. input:seq_to_tokens(sequence) .. '\n'
+          sequences = sequences .. '                </newseq>'
+        end
+      end
+
+      -- Build the port tag with or without sequences
+      inputs = inputs .. comment
+      if sequences == '' then
+        inputs = inputs .. string.format('            <port %s/>', table.concat(portProperties, ' '))
+      else
+        inputs = inputs .. string.format('            <port %s>', table.concat(portProperties, ' '))
+        inputs = inputs .. sequences
+        inputs = inputs .. '\n            </port>'
+      end
+      inputs = inputs .. '\n\n'
     end
   end
 
-  -- .cfg header and footer
-  local header = '<?xml version="1.0"?>\n<!-- This file is autogenerated; comments and unknown tags will be stripped -->\n<mameconfig version="10">\n    <system name="' .. emu.romname() .. '">\n        <input>\n'
-  local footer = '        </input>\n    </system>\n</mameconfig>\n'
+  -- .cfg Output string
+  local outputString = string.format([[
+<?xml version="1.0"?>
+<!-- This file is autogenerated; comments and unknown tags will be stripped -->
+<mameconfig version="10">
+    <system name="%s">
+        <input>
+%s        </input>
+    </system>
+</mameconfig>
+]], emu.romname(), inputs)
 
   -- Get attributes of the output directory
   local path = settings.output
@@ -96,7 +157,7 @@ function execute()
 
   -- Check if output directory already exists but is not a directory
   if (attr and attr.mode ~= "directory") then
-    emu.print_verbose("configgenerator: output path exists but isn't directory " .. path)
+    print("Output path exists but isn't directory " .. path)
     return
   end
 
@@ -106,7 +167,7 @@ function execute()
 
     -- Check that path was created
     if not lfs.attributes(path) then
-      emu.print_verbose("configgenerator: unable to create path " .. path)
+      print("Unable to create path " .. path)
       return
     end
   end
@@ -115,31 +176,49 @@ function execute()
 
   -- Check if file already exists and overwrite is disabled
   if settings.overwrite == false and io.open(output_file, "r") then
-    emu.print_verbose("configgenerator: file already exists and overwrite is disabled " .. output_file)
+    print("File already exists and overwrite is disabled " .. output_file)
     return
   end
 
+  print(string.format("Generating config: \"%s/%s.cfg\"", settings.output, emu.romname()))
+
   -- Write output file
   local file = io.open(output_file, "w")
-  file:write(header .. inputs .. footer)
+  file:write(outputString)
   file:close()
 end
 
 function configgenerator.startplugin()
+  print("Plugin started")
 
-  -- Execute plugin when emulation starts
-  emu.register_start(function()
-    if settings.run_at_start == true then
-      execute()
-    end
-  end)
+  if emu.add_machine_reset_notifier == nil and emu.register_start == nil then
+    print("Newer version of MAME is required")
+    return
+  end
 
-  -- Execute plugin when emulation stops
-  emu.register_stop(function()
-    if settings.run_at_end == true then
-      execute()
+  -- Register start notifier
+  if settings.run_at_start == true then
+    print("Registering start notifier")
+    if emu.add_machine_reset_notifier ~= nil then
+      -- Modern MAME notifier
+      runAtStartNotifier = emu.add_machine_reset_notifier(execute)
+    elseif emu.register_start ~= nil then
+      -- Backwards compatibility notifier
+      emu.register_start(execute)
     end
-  end)
+  end
+
+  -- Register stop notifier
+  if settings.run_at_end == true then
+    print("Registering stop notifier")
+    if emu.add_machine_stop_notifier ~= nil then
+      -- Modern MAME notifier
+      runAtEndNotifier = emu.add_machine_stop_notifier(execute)
+    elseif emu.register_stop ~= nil then
+      -- Backwards compatibility notifier
+      emu.register_stop(execute)
+    end
+  end
 
 end
 
