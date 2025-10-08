@@ -1,6 +1,6 @@
 # MAME Config Generator LUA Plugin
 
-This is a LUA plugin for [MAME](https://www.mamedev.org/). It automatically generates input configuration files (`.cfg`) for MAME games.
+This is a LUA plugin for [MAME](https://www.mamedev.org/). It automatically generates verbose input configuration files (`.cfg`) for MAME games.
 
 ## Installation and Usage
 
@@ -12,6 +12,7 @@ This is a LUA plugin for [MAME](https://www.mamedev.org/). It automatically gene
    - Enable `Config Generator` in MAME's Plugin Menu
    - Add `configgenerator` to the `plugin` option in `mame.ini`
    - Run MAME with the command-line option `-plugin configgenerator`
+   - Add `configgenerator 1` to `plugin.ini`
 
 ## Doesn't MAME already generate .cfg files?
 
@@ -27,7 +28,7 @@ For example if you run `pacman` using default MAME controls, this is the `pacman
 </mameconfig>
 ```
 
-Because all the input controls and dipswitches are set to default values, it doesn't include them in the configuration file.
+Because all the input controls and dipswitches are set to default values, MAME does not include them in the configuration file.
 
 This plugin will generate a similar `.cfg` but will include all input controls and dipswitches values, whether or not they are set to default values. It will even (optionally) include comments. Here is the generated `pacman.cfg`:
 
@@ -37,16 +38,48 @@ This plugin will generate a similar `.cfg` but will include all input controls a
 <mameconfig version="10">
     <system name="pacman">
         <input>
-            <!-- Coinage -->
-            <port tag=":DSW1" type="DIPSWITCH" mask="3" defvalue="1" value="1"></port>
-
             <!-- Bonus Life -->
-            <port tag=":DSW1" type="DIPSWITCH" mask="48" defvalue="0" value="0"></port>
+            <!-- Value: 0 = 10000 -->
+            <!-- Value: 16 = 15000 -->
+            <!-- Value: 32 = 20000 -->
+            <!-- Value: 48 = None -->
+            <port tag=":DSW1" type="DIPSWITCH" mask="48" defvalue="0" value="0"/>
 
-            <!-- P1 Left -->
-            <port tag=":IN0" type="P1_JOYSTICK_LEFT" mask="2" defvalue="2">
+            <!-- Coinage -->
+            <!-- Value: 1 = 1 Coin/1 Credit -->
+            <!-- Value: 2 = 1 Coin/2 Credits -->
+            <!-- Value: 3 = 2 Coins/1 Credit -->
+            <!-- Value: 0 = Free Play -->
+            <port tag=":DSW1" type="DIPSWITCH" mask="3" defvalue="1" value="1"/>
+
+            <!-- Difficulty -->
+            <!-- Value: 64 = Normal -->
+            <!-- Value: 0 = Hard -->
+            <port tag=":DSW1" type="CONFIG" mask="64" defvalue="64" value="64"/>
+
+            <!-- Ghost Names -->
+            <!-- Value: 128 = Normal -->
+            <!-- Value: 0 = Alternate -->
+            <port tag=":DSW1" type="CONFIG" mask="128" defvalue="128" value="128"/>
+
+            <!-- Lives -->
+            <!-- Value: 0 = 1 -->
+            <!-- Value: 4 = 2 -->
+            <!-- Value: 8 = 3 -->
+            <!-- Value: 12 = 5 -->
+            <port tag=":DSW1" type="DIPSWITCH" mask="12" defvalue="8" value="8"/>
+
+            <!-- Coin 1 -->
+            <port tag=":IN0" type="COIN1" mask="32" defvalue="32">
                 <newseq type="standard">
-                    KEYCODE_LEFT
+                    KEYCODE_5
+                </newseq>
+            </port>
+
+            <!-- Coin 2 -->
+            <port tag=":IN0" type="COIN2" mask="64" defvalue="64">
+                <newseq type="standard">
+                    KEYCODE_6
                 </newseq>
             </port>
 
@@ -56,13 +89,6 @@ This plugin will generate a similar `.cfg` but will include all input controls a
                     KEYCODE_DOWN
                 </newseq>
             </port>
-
-            <!-- P1 Up -->
-            <port tag=":IN0" type="P1_JOYSTICK_UP" mask="1" defvalue="1">
-                <newseq type="standard">
-                    KEYCODE_UP
-                </newseq>
-            </port>
 etc...
 ```
 
@@ -70,7 +96,7 @@ etc...
 
 This plugin is useful mostly for 3rd party MAME tools that would benefit from automatically generated config files.
 
-For MAME, it is notoriously difficult to set consistent input controls for large numbers of games at the same time, which is why invaluable tools like [CFG Magician](https://emumovies.com/files/file/601-cfg-magician/) were created long ago. CFG Magician however relies on generated configuration files for each game in order to make new ones with new input assignments. There are old configuration files for CFG Magician floating around but if rom drivers ever change or new roms are added, this plugin makes it easy to generate new config files.
+For MAME, it is notoriously difficult to set consistent input controls for large numbers of games at the same time, which is why invaluable tools like [CFG Magician](https://emumovies.com/files/file/601-cfg-magician/) were created long ago. CFG Magician however relies on generated configuration files for each game in order to make new ones with new input assignments. This plugin makes it easy to generate new config files for modern versions of MAME.
 
 ## CTRLR files and MAME command-line options
 
@@ -96,12 +122,10 @@ This plugin includes a `settings.json` with various values you can adjust
   - Default: `true`
 
   ```xml
-  <!-- P1 High Kick -->
-  <port tag=":IN0" type="P1_BUTTON3" mask="64" defvalue="64">
-      <newseq type="standard">
-          KEYCODE_ALT
-      </newseq>
-  </port>
+  <!-- Difficulty -->
+  <!-- Value: 64 = Normal -->
+  <!-- Value: 0 = Hard -->
+  <port tag=":DSW1" type="CONFIG" mask="64" defvalue="64" value="64"/>
   ```
 
 - `output` - _string_
