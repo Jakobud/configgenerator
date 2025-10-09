@@ -8,7 +8,8 @@ This is a LUA plugin for [MAME](https://www.mamedev.org/). It automatically gene
 2. Unzip the file
 3. Copy the `configgenerator` directory to the `mame/plugins/` directory:
    - Example: `/path/to/mame/plugins/configgenerator/`
-4. Enable the plugin in one of the follow ways:
+4. The plugin is set to automatically be enabled when starting MAME
+5. If not, the plugin can be enabled in one of the follow ways:
    - Enable `Config Generator` in MAME's Plugin Menu
    - Add `configgenerator` to the `plugin` option in `mame.ini`
    - Run MAME with the command-line option `-plugin configgenerator`
