@@ -2,9 +2,9 @@
   "plugin": {
     "name": "configgenerator",
     "description": "Config Generator",
-    "version": "1.4.0",
+    "version": "1.4.1",
     "author": "Jake Wilson",
     "type": "plugin",
-    "start": true
+    "start": "true"
   }
 }
